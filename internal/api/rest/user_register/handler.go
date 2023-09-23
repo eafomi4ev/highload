@@ -2,10 +2,9 @@ package user_register
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
+	"otus_highload/internal/api/rest"
 	"otus_highload/internal/domain"
 	"otus_highload/internal/utils"
 )
@@ -15,9 +14,9 @@ type Handler struct {
 	uc  RegisterUserUseCase
 }
 
-func New(ctx context.Context, uc RegisterUserUseCase) *Handler { // todo: погуглить, как сюда прокинуть контекст получше, чем явная передача параметром
+func New(ctx context.Context, uc RegisterUserUseCase) *Handler {
 	return &Handler{
-		ctx: ctx,
+		ctx: ctx, // todo: подумать, как получше прокинуть контекст в хендлер. Через замыкание?
 		uc:  uc,
 	}
 }
@@ -28,10 +27,10 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 	var body requestBody
 	err := utils.BodyParser(r.Body, &body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(fmt.Errorf("unable to parse request body: %w", err).Error()))
+		rest.Response(w, rest.BadRequest("unable to parse request body", err))
 		return
 	}
+	defer r.Body.Close()
 
 	dto := domain.UserIn{
 		FirstName: body.FirstName,
@@ -43,13 +42,11 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.uc.RegisterUser(ctx, dto)
-	if errors.Is(err, domain.DataValidationError) {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte(err.Error()))
+	if errors.Is(err, rest.DataValidationError) {
+		rest.Response(w, rest.BadRequest("", err))
 		return
 	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte(err.Error()))
+		rest.Response(w, rest.InternalServerError("", err))
 		return
 	}
 
@@ -57,9 +54,5 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID.String(),
 	}
 
-	b, _ := json.Marshal(res)
-
-	_, _ = w.Write(b)
-	return
-
+	rest.Response(w, res)
 }

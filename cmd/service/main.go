@@ -15,26 +15,29 @@ import (
 )
 
 func main() {
-	r := mux.NewRouter()
-
 	ctx := context.Background()
 
 	connect := connectToDB(ctx)
 	defer connect.Close(ctx)
 
+	// БД
 	pgStore := db_pg.New(connect)
 
+	// юзкейсы
 	userRegisterUC := uc_user_register.New(pgStore)
 
+	// хендлеры
 	loginHandler := login.New()
 	userRegister := user_register.New(ctx, userRegisterUC)
 
-	r.HandleFunc("/login", loginHandler.Handle).Methods(http.MethodPost)
-	r.HandleFunc("/user/register", userRegister.Handle).Methods(http.MethodPost)
+	router := mux.NewRouter()
+	router.HandleFunc("/login", loginHandler.Handle).Methods(http.MethodPost)
+	router.HandleFunc("/user/register", userRegister.Handle).Methods(http.MethodPost)
 
+	// сервер
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%d", 8000),
-		Handler: r,
+		Handler: router,
 	}
 	if err := server.ListenAndServe(); err != nil {
 		if !errors.Is(err, http.ErrServerClosed) {
@@ -45,7 +48,7 @@ func main() {
 
 func connectToDB(ctx context.Context) *pgx.Conn {
 	// urlExample := "postgres://username:password@localhost:5432/database_name"
-	conn, err := pgx.Connect(context.Background(), `postgres://localhost:5432/social_db`)
+	conn, err := pgx.Connect(context.Background(), `postgres://localhost:5432/social_db`) // todo: унести в env переменные
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
