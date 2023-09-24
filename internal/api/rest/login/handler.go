@@ -45,6 +45,9 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 	} else if errors.Is(err, usecase.ErrUserNotFound) {
 		rest.Response(w, rest.NotFound("user with such id has not been found", err))
 		return
+	} else if errors.Is(err, usecase.ErrDataValidation) {
+		rest.Response(w, rest.BadRequest("", err))
+		return
 	} else if err != nil {
 		rest.Response(w, rest.InternalServerError("", err))
 		return

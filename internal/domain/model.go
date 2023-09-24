@@ -15,13 +15,13 @@ type UserIn struct {
 }
 
 type User struct {
-	ID           uuid.UUID `db:"id"`
-	FirstName    string    `db:"first_name"`
-	Surname      string    `db:"surname"`
-	Birthdate    time.Time `db:"birthdate"`
-	Biography    string    `db:"biography,omitempty"`
-	City         City      `db:"city"`
-	PasswordHash string    `db:"password_hash"`
+	ID           uuid.UUID `json:"id" db:"id"`
+	FirstName    string    `json:"first_name" db:"first_name"`
+	Surname      string    `json:"surname" db:"surname"`
+	Birthdate    time.Time `json:"birthdate" db:"birthdate"`
+	Biography    string    `json:"biography,omitempty" db:"biography"`
+	City         City      `json:"city" db:"city"`
+	PasswordHash string    `json:"password_hash,omitempty" db:"password_hash"`
 }
 
 type City struct {

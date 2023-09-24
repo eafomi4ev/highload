@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"os"
 	"otus_highload/internal/api/rest/login"
+	"otus_highload/internal/api/rest/user_get_by_id"
 	"otus_highload/internal/api/rest/user_register"
 	"otus_highload/internal/app/usecase/uc_login"
+	"otus_highload/internal/app/usecase/uc_user_get_by_id"
 	"otus_highload/internal/app/usecase/uc_user_register"
 	"otus_highload/internal/storage/db_pg"
 )
@@ -27,14 +29,18 @@ func main() {
 	// юзкейсы
 	loginUC := uc_login.New(pgStore)
 	userRegisterUC := uc_user_register.New(pgStore)
+	userGetByIDUC := uc_user_get_by_id.New(pgStore)
 
 	// хендлеры
 	loginHandler := login.New(ctx, loginUC)
 	userRegister := user_register.New(ctx, userRegisterUC)
+	getUserByID := user_get_by_id.New(ctx, userGetByIDUC)
 
+	// роутер
 	router := mux.NewRouter()
 	router.HandleFunc("/login", loginHandler.Handle).Methods(http.MethodPost)
 	router.HandleFunc("/user/register", userRegister.Handle).Methods(http.MethodPost)
+	router.HandleFunc("/user/get/{id}", getUserByID.Handle).Methods(http.MethodGet)
 
 	// сервер
 	server := http.Server{
