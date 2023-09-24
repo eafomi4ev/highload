@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"otus_highload/internal/api/rest"
+	"otus_highload/internal/app/usecase"
 	"otus_highload/internal/domain"
 	"time"
 )
@@ -28,7 +28,7 @@ func (uc *UseCase) RegisterUser(ctx context.Context, in domain.UserIn) (domain.U
 
 	birthdate, err := time.Parse("02-01-2006", in.Birthdate)
 	if err != nil {
-		return domain.User{}, fmt.Errorf("%w: %s", rest.DataValidationError, "birthdate is not valid, the forman should be DD-MM-YYYY")
+		return domain.User{}, fmt.Errorf("%w: %s", usecase.ErrDataValidation, "birthdate is not valid, the forman should be DD-MM-YYYY")
 	}
 
 	newID, _ := uuid.NewRandom()
@@ -61,23 +61,23 @@ func (uc *UseCase) RegisterUser(ctx context.Context, in domain.UserIn) (domain.U
 
 func validate(in domain.UserIn) error {
 	if in.Password == "" {
-		return fmt.Errorf("%w: %s", rest.DataValidationError, "password is empty")
+		return fmt.Errorf("%w: %s", usecase.ErrDataValidation, "password is empty")
 	}
 
 	if in.FirstName == "" {
-		return fmt.Errorf("%w: %s", rest.DataValidationError, "first name is empty")
+		return fmt.Errorf("%w: %s", usecase.ErrDataValidation, "first name is empty")
 	}
 
 	if in.Surname == "" {
-		return fmt.Errorf("%w: %s", rest.DataValidationError, "surname is empty")
+		return fmt.Errorf("%w: %s", usecase.ErrDataValidation, "surname is empty")
 	}
 
 	if in.City == "" {
-		return fmt.Errorf("%w: %s", rest.DataValidationError, "city is empty")
+		return fmt.Errorf("%w: %s", usecase.ErrDataValidation, "city is empty")
 	}
 
 	if in.Birthdate == "" {
-		return fmt.Errorf("%w: %s", rest.DataValidationError, "city is empty")
+		return fmt.Errorf("%w: %s", usecase.ErrDataValidation, "city is empty")
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"otus_highload/internal/api/rest"
+	"otus_highload/internal/app/usecase"
 	"otus_highload/internal/domain"
 	"otus_highload/internal/utils"
 )
@@ -42,7 +43,7 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.uc.RegisterUser(ctx, dto)
-	if errors.Is(err, rest.DataValidationError) {
+	if errors.Is(err, usecase.ErrDataValidation) {
 		rest.Response(w, rest.BadRequest("", err))
 		return
 	} else if err != nil {

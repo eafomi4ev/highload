@@ -40,6 +40,24 @@ func (d *PostgresDB) AddUser(ctx context.Context, user domain.User) (domain.User
 	return user, nil
 }
 
+func (d *PostgresDB) GetPasswordHashByUserID(ctx context.Context, userID uuid.UUID) (domain.User, error) {
+	var passwordHash string
+	err := d.conn.QueryRow(
+		ctx,
+		"select password_hash from users where id=$1",
+		userID,
+	).Scan(&passwordHash)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	user := domain.User{
+		PasswordHash: passwordHash,
+	}
+
+	return user, nil
+}
+
 func (d *PostgresDB) GetCityByName(ctx context.Context, name string) (domain.City, error) {
 	var city domain.City
 	err := d.conn.QueryRow(

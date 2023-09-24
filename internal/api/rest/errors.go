@@ -1,13 +1,8 @@
 package rest
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-)
-
-var (
-	DataValidationError = errors.New("data validation error")
 )
 
 type ErrorResponse struct {
@@ -25,6 +20,10 @@ func (e ErrorResponse) Error() string {
 
 func BadRequest(msg string, err error) ErrorResponse {
 	return buildErrorResponse(http.StatusBadRequest, msg, err)
+}
+
+func NotFound(msg string, err error) ErrorResponse {
+	return buildErrorResponse(http.StatusNotFound, msg, err)
 }
 
 func InternalServerError(msg string, err error) ErrorResponse {

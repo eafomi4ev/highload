@@ -10,6 +10,7 @@ import (
 	"os"
 	"otus_highload/internal/api/rest/login"
 	"otus_highload/internal/api/rest/user_register"
+	"otus_highload/internal/app/usecase/uc_login"
 	"otus_highload/internal/app/usecase/uc_user_register"
 	"otus_highload/internal/storage/db_pg"
 )
@@ -24,10 +25,11 @@ func main() {
 	pgStore := db_pg.New(connect)
 
 	// юзкейсы
+	loginUC := uc_login.New(pgStore)
 	userRegisterUC := uc_user_register.New(pgStore)
 
 	// хендлеры
-	loginHandler := login.New()
+	loginHandler := login.New(ctx, loginUC)
 	userRegister := user_register.New(ctx, userRegisterUC)
 
 	router := mux.NewRouter()
