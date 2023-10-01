@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    command: ./service
+    ports:
+      - "3070:8000"
+    depends_on:
+      - db
+    links:
+      - db
+    env_file:
+      - .env
+
+
+  db:
+    restart: always
+    image: postgres:15.4-alpine
+    volumes:
+      - ./.pg/pg_volume/data:/var/lib/postgres/data
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -h db"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 20s
+    ports:
+      - "5445:${POSTGRES_PORT}"
+
+
+  db_migration:
+    image: gomicro/goose
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./db/migrations:/migrations
+    env_file:
+      - .env
+    environment:
+      - GOOSE_DRIVER=postgres
+      - GOOSE_DBSTRING=postgres://${POSTGRES_USER_NAME}:${POSTGRES_DB_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB_NAME}
+    command: >
+      goose -dir=. up
+    links:
+      - db
+
