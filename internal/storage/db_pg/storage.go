@@ -3,11 +3,13 @@ package db_pg
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
 	"otus_highload/internal/domain"
 	"otus_highload/internal/storage"
-	"time"
 )
 
 type PostgresDB struct {
@@ -82,6 +84,57 @@ from users u
 	}
 
 	return user, nil
+}
+
+func (d *PostgresDB) SearchUsersByName(ctx context.Context, firstNamePrefix, surnamePrefix string) ([]domain.User, error) {
+	firstNamePrefix = firstNamePrefix + "%"
+	surnamePrefix = surnamePrefix + "%"
+
+	q := `SELECT u.id,
+       first_name,
+       surname,
+       birthdate,
+       biography,
+       c.id,
+       c.name
+FROM users u
+         JOIN cities c on u.city_id = c.id
+WHERE first_name LIKE $1
+  AND surname LIKE $2;
+`
+	rows, err := d.conn.Query(
+		context.Background(),
+		q,
+		firstNamePrefix,
+		surnamePrefix,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []domain.User
+	for rows.Next() {
+		var u domain.User
+		err := rows.Scan(
+			&u.ID,
+			&u.FirstName,
+			&u.Surname,
+			&u.Birthdate,
+			&u.Biography,
+			&u.City.ID,
+			&u.City.Name,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (d *PostgresDB) GetPasswordHashByUserID(ctx context.Context, userID uuid.UUID) (domain.User, error) {

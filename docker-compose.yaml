@@ -12,6 +12,9 @@ services:
       - db
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=db
+      - ENVIRONMENT="staging"
 
 
   db:
@@ -41,6 +44,7 @@ services:
     env_file:
       - .env
     environment:
+      - POSTGRES_HOST=db
       - GOOSE_DRIVER=postgres
       - GOOSE_DBSTRING=postgres://${POSTGRES_USER_NAME}:${POSTGRES_DB_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB_NAME}
     command: >

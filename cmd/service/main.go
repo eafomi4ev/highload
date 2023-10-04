@@ -10,13 +10,16 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 
 	"otus_highload/internal/api/rest/login"
 	"otus_highload/internal/api/rest/user_get_by_id"
 	"otus_highload/internal/api/rest/user_register"
+	"otus_highload/internal/api/rest/user_search_by_name"
 	"otus_highload/internal/app/usecase/uc_login"
 	"otus_highload/internal/app/usecase/uc_user_get_by_id"
 	"otus_highload/internal/app/usecase/uc_user_register"
+	"otus_highload/internal/app/usecase/uc_user_search_by_name"
 	"otus_highload/internal/storage/db_pg"
 )
 
@@ -33,17 +36,20 @@ func main() {
 	loginUC := uc_login.New(pgStore)
 	userRegisterUC := uc_user_register.New(pgStore)
 	userGetByIDUC := uc_user_get_by_id.New(pgStore)
+	userSearchByName := uc_user_search_by_name.New(pgStore)
 
 	// хендлеры
 	loginHandler := login.New(ctx, loginUC)
 	userRegister := user_register.New(ctx, userRegisterUC)
 	getUserByID := user_get_by_id.New(ctx, userGetByIDUC)
+	searchUsersByName := user_search_by_name.New(ctx, userSearchByName)
 
 	// роутер
 	router := mux.NewRouter()
 	router.HandleFunc("/login", loginHandler.Handle).Methods(http.MethodPost)
 	router.HandleFunc("/user/register", userRegister.Handle).Methods(http.MethodPost)
 	router.HandleFunc("/user/get/{id}", getUserByID.Handle).Methods(http.MethodGet)
+	router.HandleFunc("/user/search", searchUsersByName.Handle).Methods(http.MethodGet)
 
 	// сервер
 	server := http.Server{
@@ -64,7 +70,19 @@ func connectToDB(ctx context.Context) *pgx.Conn {
 		POSTGRES_USER_NAME   = "POSTGRES_USER_NAME"
 		POSTGRES_DB_PASSWORD = "POSTGRES_DB_PASSWORD"
 		POSTGRES_DB_NAME     = "POSTGRES_DB_NAME"
+
+		ENVIRONMENT = "ENVIRONMENT"
 	)
+
+	environment := shouldBePresent(ENVIRONMENT)(os.LookupEnv(ENVIRONMENT))
+
+	if environment == "local" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "error while reading .env file: %v", err)
+			os.Exit(1)
+		}
+	}
 
 	pgHost := shouldBePresent(POSTGRES_HOST)(os.LookupEnv(POSTGRES_HOST))
 	pgPort := shouldBePresent(POSTGRES_PORT)(os.LookupEnv(POSTGRES_PORT))
@@ -76,7 +94,7 @@ func connectToDB(ctx context.Context) *pgx.Conn {
 	// urlExample := "postgres://username:password@localhost:5432/database_name"
 	conn, err := pgx.Connect(context.Background(), connString)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
 
